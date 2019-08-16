@@ -1,0 +1,65 @@
+#!/bin/bash
+fftwv=2.1.5
+
+function fail()
+{
+echo FATALL ERRROR in $1 stage
+echo ... check output log
+exit 1
+}
+
+if [ -n "$SLIM_COMP" ]; then
+	echo Installing FFTW2 $fftwv in $SLIM_COMP
+else
+	echo FATAL ERROR: undefined environment SLIM_COMP
+	exit 1
+fi
+
+# TMPDIR
+export TMPDIR=/tmp/`whoami`/fftw2-${fftwv}
+
+# set temporary installation directories
+srcdir=${TMPDIR}/fftw-${fftwv}
+instdir=$SLIM_COMP/external
+
+# set prompt
+PS4="\n%%%%% "
+#set -x
+
+# delete old temporary directories
+test -e $TMPDIR && rm -rf $TMPDIR
+test -e $srcdir && rm -rf $srcdir
+
+# create new temporary directories
+mkdir -p $TMPDIR || exit 1
+cd $TMPDIR || exit 1
+tar -xzf $SLIM_COMP/external/tarballs/fftw-${fftwv}.tgz || exit 1
+cd $srcdir || exit 1
+
+# CONFIGURE
+echo CONFIGURATION stage
+echo ... output in ${TMPDIR}/configure.fftw2-${fftwv}
+$srcdir/configure \
+	--prefix=$instdir \
+	--with-pic \
+	--enable-threads \
+	1>${TMPDIR}/configure.fftw2-${fftwv} 2>&1 || fail "CONFIGURATION"
+echo CONFIGURATION done
+
+# MAKE
+echo BUILD stage
+echo ... output in ${TMPDIR}/make_build.fftw2-${fftwv}
+make -j 2 1>${TMPDIR}/make_build.fftw2-${fftwv} 2>&1 || fail "BUILD"
+echo BUILD done
+
+# INSTALL
+echo INSTALLATION stage
+echo ... output in ${TMPDIR}/make_install.fftw2-${fftwv}
+make install 1>${TMPDIR}/make_install.fftw2-${fftwv} 2>&1 || fail "INSTALLATION"
+echo INSTALL done
+
+# clean temporary directories
+echo CLEANUP stage
+rm -rf $TMPDIR
+
+echo FFTW2 installation completed

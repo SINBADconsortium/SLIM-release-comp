@@ -1,0 +1,22 @@
+*.DS_Store
+
+# installation-created files
+*.mex*
+*.o
+*.d
+*.a
+*.so
+**/test
+**/test_gcc
+
+# installation-created directories
+external/bin/
+external/include/
+external/info/
+external/lib/
+external/lib64/
+external/libexec/
+external/man/
+external/pylib/
+external/share/
+external/x86_64-unknown-linux-gnu/

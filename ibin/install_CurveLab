@@ -1,0 +1,65 @@
+#!/bin/bash
+CLv=2.1.2-SLIM
+
+function fail()
+{
+echo FATALL ERRROR in $1 stage
+echo ... check output log
+exit 1
+}
+
+if [ -n "$SLIM_COMP" ]; then
+	echo Installing CurveLab $CLv in $SLIM_COMP
+else
+	echo FATAL ERROR: undefined environment SLIM_COMP
+	exit 1
+fi
+
+# set FFTW environments
+export FFTW_DIR=$SLIM_COMP/external
+export FFTW3_DIR=$SLIM_COMP/external
+
+# TMPDIR
+export TMPDIR=/tmp/`whoami`/CurveLab-${CLv}
+
+# set source directory
+srcdir=$SLIM_COMP/tools/transforms/CurveLab-${CLv}
+
+# set prompt
+PS4="\n%%%%% "
+#set -x
+
+# create new temporary directories
+mkdir -p $TMPDIR || exit 1
+cd $srcdir || exit 1
+make clean 2>&1 1>/dev/null
+
+# check for mex
+echo CHECK mex stage
+echo ... output in ${TMPDIR}/check_mex.CurveLab-${CLv}
+mex -help 1>${TMPDIR}/check_mex.CurveLab-${CLv} 2>&1 || fail "CHECK for mex executable"
+echo CHECK mex done
+
+# MAKE lib
+echo BUILD LIBS stage
+echo ... output in ${TMPDIR}/make_lib.CurveLab-${CLv}
+make lib 1>${TMPDIR}/make_lib.CurveLab-${CLv} 2>&1 || fail "BUILD LIBS"
+echo BUILD LIBS done
+
+# MAKE test
+echo TEST LIBS stage
+echo ... output in ${TMPDIR}/make_test.CurveLab-${CLv}
+make test 1>${TMPDIR}/make_test.CurveLab-${CLv} 2>&1 || fail "TEST LIBS"
+echo TEST LIBS done
+
+# MAKE matlab
+echo BUILD MATLAB stage
+echo ... output in ${TMPDIR}/make_matlab.CurveLab-${CLv}
+make matlab 1>${TMPDIR}/make_matlab.CurveLab-${CLv} 2>&1 || fail "BUILD MATLAB"
+echo BUILD MATLAB done
+
+# clean temporary directories
+echo CLEANUP stage
+rm -rf $TMPDIR
+
+echo CurveLab installation completed

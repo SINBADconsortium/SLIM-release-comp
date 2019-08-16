@@ -1,0 +1,64 @@
+#!/bin/bash
+
+function fail()
+{
+echo FATALL ERRROR in $1 stage
+echo ... check output log
+exit 1
+}
+
+if [ -n "$SLIM_COMP" ]; then
+	echo Installing MATLAB_RSF in $SLIM_COMP
+else
+	echo FATAL ERROR: undefined environment SLIM_COMP
+	exit 1
+fi
+
+# TMPDIR
+export TMPDIR=/tmp/`whoami`
+
+# set temporary installation directories
+srcdir=${TMPDIR}/MATLAB_RSF
+instdir=$SLIM_COMP/external/lib
+
+# set prompt
+PS4="\n%%%%% "
+#set -x
+
+# delete old temporary directories
+test -e $TMPDIR && rm -rf $TMPDIR
+test -e $srcdir && rm -rf $srcdir
+
+# create new temporary directories
+mkdir -p $TMPDIR || exit 1
+cd $TMPDIR || exit 1
+tar -xzf $SLIM_COMP/external/tarballs/MATLAB_RSF.tgz || exit 1
+cd $srcdir || exit 1
+
+# BUILD LIBRARY
+echo BUILD LIBRARY stage
+echo ... output in ${TMPDIR}/build_LIBRARY.MATLAB_RSF
+cd c
+scons 1>${TMPDIR}/build_LIBRARY.MATLAB_RSF 2>&1 || fail "LIBRARY BUILD"
+cd $srcdir
+echo BUILD LIBRARY done
+
+# BUILD MEX
+echo BUILD MEX stage
+echo ... output in ${TMPDIR}/build_MEX.MATLAB_RSF
+cd matlab
+scons 1>${TMPDIR}/build_MEX.MATLAB_RSF 2>&1 || fail "MEX BUILD"
+cd $srcdir
+echo BUILD MEX done
+
+# INSTALL
+echo INSTALLATION stage
+echo ... output in ${TMPDIR}/install_MEX.MATLAB_RSF
+mv -vf matlab/*.mex* $instdir 1>${TMPDIR}/install_MEX.MATLAB_RSF 2>&1 || fail "MEX INSTALLATION"
+echo INSTALL done
+
+# clean temporary directories
+echo CLEANUP stage
+rm -rf $TMPDIR
+
+echo MATLAB_RSF installation completed

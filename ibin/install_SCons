@@ -1,0 +1,63 @@
+#!/bin/bash
+SCv=2.1.0
+
+function fail()
+{
+echo FATALL ERRROR in $1 stage
+echo ... check output log
+exit 1
+}
+
+if [ -n "$SLIM_COMP" ]; then
+	echo Installing SCons $SCv in $SLIM_COMP
+else
+	echo FATAL ERROR: undefined environment SLIM_COMP
+	exit 1
+fi
+
+# TMPDIR
+export TMPDIR=/tmp/`whoami`/scons-${SCv}
+
+# set temporary installation directories
+srcdir=${TMPDIR}/scons-${SCv}
+instdir=$SLIM_COMP/external
+
+# set prompt
+PS4="\n%%%%% "
+#set -x
+
+# delete old temporary directories
+test -e $TMPDIR && rm -rf $TMPDIR
+test -e $srcdir && rm -rf $srcdir
+
+# create new temporary directories
+mkdir -p $TMPDIR || exit 1
+cd $TMPDIR || exit 1
+tar -xzf $SLIM_COMP/external/tarballs/scons-${SCv}.tgz || exit 1
+cd $srcdir || exit 1
+
+# MAKE
+echo BUILD stage
+echo ... output in ${TMPDIR}/python_build.scons-${SCv}
+python setup.py build 1>${TMPDIR}/python_build.scons-${SCv} 2>&1 || fail "BUILD"
+echo BUILD done
+
+# INSTALL
+echo INSTALLATION stage
+echo ... output in ${TMPDIR}/python_install.scons-${SCv}
+python setup.py install \
+	--prefix=$instdir \
+	1>${TMPDIR}/python_install.scons-${SCv} 2>&1 || fail "INSTALLATION"
+echo INSTALL done
+
+# CUSTOM FIXES
+echo CUSTOMIZING external/lib/scons-$SCv/SCons/Platform/posix.py
+cp -f $SLIM_COMP/external/lib/scons-$SCv/SCons/Platform/posix.py $SLIM_COMP/external/lib/scons-$SCv/SCons/Platform/posix.py.orig || exit 1
+cp -f $SLIM_COMP/external/etc/scons-$SCv.posix.py $SLIM_COMP/external/lib/scons-$SCv/SCons/Platform/posix.py || exit 1
+echo CUSTOMIZING done
+
+# clean temporary directories
+echo CLEANUP stage
+rm -rf $TMPDIR
+
+echo SCons installation completed

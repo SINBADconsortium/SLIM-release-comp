@@ -1,0 +1,71 @@
+#!/bin/bash
+rsfv=10766+
+
+function fail()
+{
+echo FATALL ERRROR in $1 stage
+echo ... check output log
+exit 1
+}
+
+if [ -n "$SLIM_COMP" ]; then
+	echo Installing MADAGASCAR $rsfv in $SLIM_COMP
+else
+	echo FATAL ERROR: undefined environment SLIM_COMP
+	exit 1
+fi
+
+# TMPDIR
+export TMPDIR=/tmp/`whoami`/MADAGASCAR-${rsfv}
+
+# set temporary installation directories
+srcdir=${TMPDIR}/MADAGASCAR-${rsfv}
+instdir=$SLIM_COMP/external
+
+# set prompt
+PS4="\n%%%%% "
+#set -x
+
+# delete old temporary directories
+test -e $TMPDIR && rm -rf $TMPDIR
+test -e $srcdir && rm -rf $srcdir
+
+# create new temporary directories
+mkdir -p $TMPDIR || exit 1
+cd $TMPDIR || exit 1
+tar -xzf $SLIM_COMP/external/tarballs/MADAGASCAR-${rsfv}.tgz || exit 1
+cd $srcdir || exit 1
+
+# CONFIGURE
+echo CONFIGURATION stage
+echo ... output in ${TMPDIR}/configure.MADAGASCAR-${rsfv}
+#diff $SLIM_COMP/external/etc/SConstruct-${rsfv} $srcdir/SConstruct
+cp $SLIM_COMP/external/etc/SConstruct-${rsfv} $srcdir/SConstruct
+$srcdir/configure \
+	--prefix=$RSFROOT \
+	API=matlab \
+	CC=`which gcc`\
+	CXX=`which g++`\
+	F77=`which gfortran`\
+	F90=`which gfortran`\
+	FORTRAN=`which gfortran` \
+	1>${TMPDIR}/configure.MADAGASCAR-${rsfv} 2>&1 || fail "CONFIGURATION"
+echo CONFIGURATION done
+
+# MAKE
+echo BUILD stage
+echo ... output in ${TMPDIR}/make_build.MADAGASCAR-${rsfv}
+make 1>${TMPDIR}/make_build.MADAGASCAR-${rsfv} 2>&1 || fail "BUILD"
+echo BUILD done
+
+# INSTALL
+echo INSTALLATION stage
+echo ... output in ${TMPDIR}/make_install.MADAGASCAR-${rsfv}
+make install 1>${TMPDIR}/make_install.MADAGASCAR-${rsfv} 2>&1 || fail "INSTALLATION"
+echo INSTALL done
+
+# clean temporary directories
+echo CLEANUP stage
+rm -rf $TMPDIR
+
+echo MADAGASCAR installation completed

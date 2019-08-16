@@ -1,0 +1,64 @@
+#!/bin/bash
+bsnv=2.22
+
+function fail()
+{
+echo FATALL ERRROR in $1 stage
+echo ... check output log
+exit 1
+}
+
+if [ -n "$SLIM_COMP" ]; then
+	echo Installing Binutils $bsnv in $SLIM_COMP
+else
+	echo FATAL ERROR: undefined environment SLIM_COMP
+	exit 1
+fi
+test_gcc && exit 0
+
+# TMPDIR
+export TMPDIR=/tmp/`whoami`/binutils-${bsnv}
+
+# set temporary installation directories
+srcdir=${TMPDIR}/binutils-${bsnv}
+instdir=$SLIM_COMP/external
+
+# set prompt
+PS4="\n%%%%% "
+#set -x
+
+# delete old temporary directories
+test -e $TMPDIR && rm -rf $TMPDIR
+test -e $srcdir && rm -rf $srcdir
+
+# create new temporary directories
+mkdir -p $TMPDIR || exit 1
+cd $TMPDIR || exit 1
+tar -xzf $SLIM_COMP/external/tarballs/binutils-${bsnv}.tgz || exit 1
+cd $srcdir || exit 1
+
+# CONFIGURE
+echo CONFIGURATION stage
+echo ... output in ${TMPDIR}/configure.binutils-${bsnv}
+$srcdir/configure \
+	--prefix=$instdir \
+	1>${TMPDIR}/configure.binutils-${bsnv} 2>&1 || fail "CONFIGURATION"
+echo CONFIGURATION done
+
+# MAKE
+echo BUILD stage
+echo ... output in ${TMPDIR}/make_build.binutils-${bsnv}
+make -j 2 1>${TMPDIR}/make_build.binutils-${bsnv} 2>&1 || fail "BUILD"
+echo BUILD done
+
+# INSTALL
+echo INSTALLATION stage
+echo ... output in ${TMPDIR}/make_install.binutils-${bsnv}
+make install 1>${TMPDIR}/make_install.binutils-${bsnv} 2>&1 || fail "INSTALLATION"
+echo INSTALL done
+
+# clean temporary directories
+echo CLEANUP stage
+rm -rf $TMPDIR
+
+echo Binutils installation completed

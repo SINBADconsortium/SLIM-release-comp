@@ -1,0 +1,24 @@
+#!/bin/bash
+PS4="\n%%%%% "
+
+function fail()
+{
+echo FATALL ERRROR in $1 installation
+echo ... check output log
+exit 1
+}
+set -x
+
+# 3-rd party packages
+install_Bison		|| fail "Bison"
+install_Binutils	|| fail "Binutils"
+install_GCC		|| fail "GCC"
+install_Python		|| fail "Python"
+install_SCons		|| fail "SCons"
+install_MADAGASCAR	|| fail "MADAGASCAR"
+install_FFTW2		|| fail "FFTW2"
+install_FFTW3		|| fail "FFTW3"
+install_NFFT		|| fail "NFFT"
+
+# SLIM packages
+install_CurveLab	|| fail "CurveLab"

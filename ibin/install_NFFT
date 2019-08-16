@@ -1,0 +1,99 @@
+#!/bin/bash
+nfft=3.3.1+
+
+function fail()
+{
+echo FATALL ERRROR in $1 stage
+echo ... check output log
+exit 1
+}
+
+if [ -n "$SLIM_COMP" ]; then
+	echo Installing NFFT $nfft in $SLIM_COMP
+else
+	echo FATAL ERROR: undefined environment SLIM_COMP
+	exit 1
+fi
+
+# Find MATLAB home
+if [ -n "$MATLAB_HOME" ]; then
+    echo MATLAB_HOME = $MATLAB_HOME
+else
+    echo Trying to find home of MATLAB installation ...
+    mp=$(which matlab 2>/dev/null)
+    if [ $? -ne 0 ]; then
+        echo FATAL ERROR: Did not find MATLAB executable
+        exit 1
+    else
+        mp=$(dirname $mp)
+        mp=$(dirname $mp)
+        if [ -f "$mp/bin/matopts.sh" ]; then
+            export MATLAB_HOME=$mp
+            echo MATLAB_HOME = $MATLAB_HOME
+        else
+            echo FATAL ERROR: failed to find home of MATLAB installation
+            echo set MATLAB_HOME to home of MATLAB installation before running this scrip
+            exit 1
+        fi
+    fi
+fi
+mp=$(which mex 2>/dev/null)
+if [ $? -ne 0 ]; then
+    echo FATAL ERROR: Did not find MEX executable
+    exit 1
+fi
+export FFTW3_DIR=$SLIM_COMP/external
+export MATLAB_ARCH=glnxa64
+
+# TMPDIR
+export TMPDIR=/tmp/`whoami`/nfft-${nfft}
+
+# set temporary installation directories
+srcdir=${TMPDIR}/nfft-${nfft}
+instdir=$SLIM_COMP/external
+
+# set prompt
+PS4="\n%%%%% "
+#set -x
+
+# delete old temporary directories
+test -e $TMPDIR && rm -rf $TMPDIR
+test -e $srcdir && rm -rf $srcdir
+
+# create new temporary directories
+mkdir -p $TMPDIR || exit 1
+cd $TMPDIR || exit 1
+tar -xzf $SLIM_COMP/external/tarballs/nfft-${nfft}.tgz || exit 1
+cd $srcdir || exit 1
+
+# CONFIGURE
+echo CONFIGURATION stage
+echo ... output in ${TMPDIR}/configure.nfft-${nfft}
+$srcdir/configure \
+	--prefix=$instdir \
+	--with-fftw3=$FFTW3_DIR \
+	--with-matlab=$MATLAB_HOME \
+	--with-matlab-arch=$MATLAB_ARCH \
+	--with-matlab-fftw3-libdir=$MATLAB_HOME/bin/$MATLAB_ARCH \
+	--enable-openmp \
+	--with-pic \
+	1>${TMPDIR}/configure.nfft-${nfft} 2>&1 || fail "CONFIGURATION"
+echo CONFIGURATION done
+
+# MAKE
+echo BUILD stage
+echo ... output in ${TMPDIR}/make_build.nfft-${nfft}
+make -j 2 1>${TMPDIR}/make_build.nfft-${nfft} 2>&1 || fail "BUILD"
+echo BUILD done
+
+# INSTALL
+echo INSTALLATION stage
+echo ... output in ${TMPDIR}/make_install.nfft-${nfft}
+make install 1>${TMPDIR}/make_install.nfft-${nfft} 2>&1 || fail "INSTALLATION"
+echo INSTALL done
+
+# clean temporary directories
+echo CLEANUP stage
+rm -rf $TMPDIR
+
+echo NFFT installation completed
