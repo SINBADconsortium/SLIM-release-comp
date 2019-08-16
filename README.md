@@ -1,4 +1,4 @@
-# 3rd-party software for SLIM software release to SINBAD consortium
+# Public legacy release of 3rd-party software for SLIM software release to SINBAD consortium
 ## 1 DESCRIPTION
  This is the repository for SLIM's software release for SINBAD
  consortium members. The release contains applications and tools
