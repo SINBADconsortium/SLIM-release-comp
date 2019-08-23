@@ -1,4 +1,4 @@
-MIT License
+MIT License (see note at the bottom)
 
 Copyright (c) 2018 SINBAD Consortium - University of British Columbia (SLIM group)
 
@@ -19,3 +19,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+NOTE! 3-rd party software packages in this repository have their own license. Make
+sure to check those as well. Looke for files like LICENCE/COPYING.
